@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Results</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Image Processing Results</h1>
+        
+        <div class="result-container">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading results...</p>
+            </div>
+            
+            <div id="results" class="hidden">
+                <div class="result-item">
+                    <h3>Original Image</h3>
+                    <div class="image-container">
+                        <img id="original-image" src="" alt="Original image">
+                    </div>
+                </div>
+                
+                <div class="result-details">
+                    <h3>Processing Details</h3>
+                    <div id="result-data"></div>
+                </div>
+            </div>
+            
+            <div id="error-message" class="error hidden"></div>
+            
+            <div class="actions">
+                <a href="/" class="button">Process Another Image</a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/result.js"></script>
+</body>
+</html>

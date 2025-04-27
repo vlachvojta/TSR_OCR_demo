@@ -1,6 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import uuid
 import os
 from typing import Dict, Any
@@ -19,7 +20,13 @@ image_results: Dict[str, Any] = {}
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@app.post("/", summary="Upload an image for processing")
+# Set up templates and static files
+templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+# API endpoints
+@app.post("/api/upload", summary="Upload an image for processing")
 async def upload_image(file: UploadFile = File(...)):
     """
     Upload an image file for processing.
@@ -45,7 +52,7 @@ async def upload_image(file: UploadFile = File(...)):
     
     return {"picture_id": picture_id}
 
-@app.get("/{picture_id}", summary="Get image processing results")
+@app.get("/api/results/{picture_id}", summary="Get image processing results")
 async def get_results(picture_id: str):
     """
     Retrieve the processing results for a previously uploaded image.
@@ -59,8 +66,21 @@ async def get_results(picture_id: str):
     
     return image_results[picture_id]
 
-# Mount the UPLOAD_DIR as a static directory
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+# Frontend routes
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    """Serve the upload page"""
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/result/{picture_id}", response_class=HTMLResponse)
+async def read_result(request: Request, picture_id: str):
+    """Serve the result page"""
+    return templates.TemplateResponse("result.html", {"request": request, "picture_id": picture_id})
+
+# Favicon
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse('static/favicon.ico')
 
 if __name__ == "__main__":
     import uvicorn

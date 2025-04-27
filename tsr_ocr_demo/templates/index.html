@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Image for Processing</h1>
+        
+        <div class="upload-container">
+            <form id="upload-form">
+                <div class="file-input-container">
+                    <label for="image-upload" class="file-input-label">
+                        <span id="file-name">Choose an image file</span>
+                    </label>
+                    <input type="file" id="image-upload" accept="image/*" required>
+                </div>
+                
+                <div class="preview-container">
+                    <img id="image-preview" src="/static/placeholder.png" alt="Image preview">
+                </div>
+                
+                <button type="submit" class="submit-btn">Upload and Process</button>
+            </form>
+            
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Uploading and processing image...</p>
+            </div>
+            
+            <div id="error-message" class="error hidden"></div>
+        </div>
+    </div>
+    
+    <script src="/static/upload.js"></script>
+</body>
+</html>
