@@ -3,7 +3,7 @@ tsr_ocr_demo/uploads
 uploads/*-*  
 .venv_*
 .vscode
-libs
+libs/*/
 
 /**/__pycache__/
 *.py[cod]

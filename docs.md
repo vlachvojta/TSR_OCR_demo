@@ -19,3 +19,6 @@ bash tsr_demo/start_tsr_demo.sh
 ```
 První spuštění bude trvat déle, protože se stahuje několik deep-learning modelů.
 
+Potřebné nástroje před spuštěním:
+- python3.8+
+- pip
