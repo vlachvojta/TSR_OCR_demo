@@ -6,53 +6,79 @@ import uuid
 import os
 from typing import Dict, Any
 
+# from libs.document_structure_analysis.table_transformer_baseline.baseline_table_enging import TableEngine
+
 app = FastAPI(
-    title="Image Processing API",
-    description="API for uploading and processing images",
+    title="TSR demo",
+    description="API and GUI for Table Structure Recognition (TSR) processing of images.",
     version="0.1.0",
 )
 
 # In-memory storage for demo purposes
 # In a real application, you'd use a database
 image_results: Dict[str, Any] = {}
+image_results['example_page'] = {
+    "status": "completed",
+    "original_filename": "example_page.png",
+    "file_path": "uploads/example_page/example_page.png",
+    "xml_content": None,
+    "picture_id": 'example_page',
+    "image_ext": '.png',
+    "picture_dir": 'uploads/example_page',
+    "rendered_image": 'uploads/example_page/example_page_render.png',
+}
 
 # Ensure upload directory exists
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Set up templates and static files
-templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="tsr_demo/templates")
+app.mount("/static", StaticFiles(directory="tsr_demo/static"), name="static")
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
+# Initialize the TSR engine
+# tsr_engine = TableEngine('uploads', 'libs/run_pero_ocr.sh')
+
 # API endpoints
-@app.post("/api/upload", summary="Upload an image for processing")
+@app.post("/api/upload", summary="Upload an image for TSR processing")
 async def upload_image(file: UploadFile = File(...)):
     """
-    Upload an image file for processing.
+    Upload an image file for TSR processing.
     
-    Returns a picture ID that can be used to retrieve the processing results.
+    Returns a picture ID that can be used to retrieve the processing results (after finished).
     """
     # Generate a unique ID for the image
     picture_id = str(uuid.uuid4())
+    picture_dir = os.path.join(UPLOAD_DIR, picture_id)
+    os.makedirs(picture_dir, exist_ok=True)
+
+    # get image extension
+    _, image_ext = os.path.splitext(file.filename)
     
     # Save the uploaded file
-    file_path = os.path.join(UPLOAD_DIR, f"{picture_id}_{file.filename}")
+    file_path = os.path.join(picture_dir, f"{picture_id}.{image_ext}")
     with open(file_path, "wb") as f:
         f.write(await file.read())
-    
-    # TODO: Implement actual image processing here
-    
+
     # For now, just store dummy results
     image_results[picture_id] = {
         "status": "processing",
         "original_filename": file.filename,
-        "file_path": file_path
+        "file_path": file_path,
+        "xml_content": None,
+        "picture_id": picture_id,
+        "image_ext": image_ext,
+        "picture_dir": picture_dir,
+        "rendered_image": os.path.join(picture_dir, f"{picture_id}_render.png"),
     }
+
+    # TODO: run table structure recognition
+    # tsr_engine.process_dir_async(picture_dir)
     
     return {"picture_id": picture_id}
 
-@app.get("/api/results/{picture_id}", summary="Get image processing results")
+@app.get("/api/results/{picture_id}", summary="Get image TSR results")
 async def get_results(picture_id: str):
     """
     Retrieve the processing results for a previously uploaded image.
@@ -61,8 +87,19 @@ async def get_results(picture_id: str):
     """
     if picture_id not in image_results:
         raise HTTPException(status_code=404, detail="Image not found")
-    
+
     # TODO: Check if processing is complete and return actual results
+
+    # send XML file in UPLOAD_DIR/picture_id/picture_id.xml
+    demo_path = 'example_page'
+    xml_file_path = os.path.join(UPLOAD_DIR, picture_id, f"{picture_id}.xml")
+    if os.path.exists(xml_file_path):
+        with open(xml_file_path, "r") as f:
+            xml_content = f.read()
+        image_results[picture_id]["xml_content"] = xml_content[:200] + "..."
+        image_results[picture_id]["status"] = "completed"
+    else:
+        image_results[picture_id]["status"] = "processing"
     
     return image_results[picture_id]
 

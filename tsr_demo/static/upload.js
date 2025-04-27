@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(file);
         } else {
             fileName.textContent = 'Choose an image file';
+            // We still keep the placeholder image visible
             imagePreview.src = '/static/placeholder.png';
         }
     });
@@ -29,11 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const file = imageUpload.files[0];
-        if (!file) {
-            showError('Please select an image file');
-            return;
-        }
+        // MODIFIED: Removed the file validation check that was here
+        // This allows submission even when no file is selected
         
         // Show loading state
         uploadForm.classList.add('hidden');
@@ -42,7 +40,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const formData = new FormData();
-            formData.append('file', file);
+            
+            const file = imageUpload.files[0];
+            if (file) {
+                // If a file is selected, use it
+                formData.append('file', file);
+            } else {
+                // If no file is selected, we'll need to fetch the placeholder and add it
+                const placeholderResponse = await fetch('/static/placeholder.png');
+                const placeholderBlob = await placeholderResponse.blob();
+                
+                // Create a File object from the blob
+                const placeholderFile = new File(
+                    [placeholderBlob], 
+                    'placeholder.png', 
+                    { type: 'image/png' }
+                );
+                
+                formData.append('file', placeholderFile);
+            }
             
             const response = await fetch('/api/upload', {
                 method: 'POST',

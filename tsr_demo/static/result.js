@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Set the original image
         if (data.file_path) {
-            originalImage.src = `/${data.file_path}`;
+            originalImage.src = `/${data.rendered_image}`;
         }
         
         // Format and display the JSON data
