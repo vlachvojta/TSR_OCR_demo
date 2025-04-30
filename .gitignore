@@ -1,6 +1,8 @@
-tsr_ocr_demo/uploads
+xvlach22.zip
+
 # Ignore all folders with uuids in the name
 uploads/*-*  
+!uploads/example_page
 .venv_*
 .vscode
 libs/*/

@@ -59,6 +59,6 @@ find libs -type d -name "__pycache__" -exec rm -rf {} \;
 find libs -type d -name "example_data" -exec rm -rf {} \;
 
 zip -r xvlach22.zip \
-    docs.md start_tsr_demo.sh install_and_run.sh \
+    docs.md start_tsr_demo.sh install_and_start.sh README.md \
     tsr_demo/static tsr_demo/templates tsr_demo/start.py \
     uploads/example_page libs
