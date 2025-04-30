@@ -1,3 +1,5 @@
+'use strict';
+
 document.addEventListener('DOMContentLoaded', () => {
     const resultsContainer = document.getElementById('results');
     const loading = document.getElementById('loading');
@@ -12,24 +14,33 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Fetch the results
     fetchResults(pictureId);
-    
-    async function fetchResults(id) {
-        try {
-            const response = await fetch(`/api/results/${id}`);
-            
-            if (!response.ok) {
-                throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            // Display the results
-            displayResults(data);
 
-        } catch (error) {
-            showError(`Error: ${error.message}`);
+    let pollingInterval;
+
+    async function fetchResults(id) {
+        const response = await fetch(`/api/results/${id}`);
+        
+        if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        // Display the results
+        displayResults(data);
+        // If the status is not 'processed' or 'error', poll again after a delay
+        if (data.status !== 'processed' && data.status !== 'error') {
+            if (!pollingInterval) {
+                pollingInterval = setInterval(() => fetchResults(id), 250); // Poll every 250ms
+            }
+        } else {
+            // Stop polling when processing is complete
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
         }
     }
-    
+
     function displayResults(data) {
         if (data.input_image) {
             originalImage.src = `/${data.input_image}`;
@@ -44,8 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         } else if (data.status !== 'processed') {
             loading_text.textContent = `${data.status}`;
-            
-            link = statusToLink(data.status);
+
+            const link = statusToLink(data.status);
             // if link is not null, show the link
             if (link) {
                 loading_text.innerHTML = `${data.status} using <a href="${link.link}" target="_blank" rel="noopener noreferrer">${link.text}</a>`;
@@ -57,9 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Hide loading
         loading.classList.add('hidden');
-        
     }
-    
+
     function showError(message) {
         loading.classList.add('hidden');
         errorMessage.textContent = message;
@@ -87,13 +97,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-
-
-    // INPUT_CREATED = "Input created"
-    // PROCESSING_OCR = 'Processing OCR (Optical Character Recognition) using <a href="https://github.com/DCGM/pero-ocr" target="_blank" rel="noopener noreferrer">pero-ocr</a>'
-    // DETECTING_TABLES = 'Detecting tables in the image using <a href="https://huggingface.co/microsoft/table-transformer-detection" target="_blank" rel="noopener noreferrer">Microsot table transformer detector</a>'
-    // RECOGNIZING_TABLE_STRUCTURE = 'Recognizing table structure <a href="https://huggingface.co/microsoft/table-transformer-structure-recognition" target="_blank" rel="noopener noreferrer">Microsot table transformer</a>'
-    // PROCESSED = "processed"
-    // ERROR = "error"  # Added an error state for robustness
-
+    // Clean up interval when leaving the page
+    window.addEventListener('beforeunload', () => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+    });
 });
