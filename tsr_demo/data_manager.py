@@ -39,24 +39,24 @@ class TsrResultDto(ImageProcessingResult):
 
 class DataManager:
     """Class to manage data persistence across multiple FastAPI instances."""
-    
+
     def __init__(self, base_upload_dir: str = "uploads"):
         """Initialize the data manager with the upload directory."""
         self.base_upload_dir = base_upload_dir
         os.makedirs(base_upload_dir, exist_ok=True)
         logger.info(f"DataManager initialized with base directory: {base_upload_dir}")
-    
+
     def _get_picture_dir(self, picture_id: str) -> str:
         """Get the directory for a specific picture."""
         picture_dir = os.path.join(self.base_upload_dir, picture_id)
         os.makedirs(picture_dir, exist_ok=True)
         return picture_dir
-    
+
     def _get_state(self, picture_id: str) -> str:
         """Get the path to the state file for a specific picture."""
         picture_dir = self._get_picture_dir(picture_id)
         return os.path.join(picture_dir, f"{picture_id}_state.json")
-    
+
     async def save_upload(self, picture_id: str, file: UploadFile) -> ImageProcessingResult:
         """Save an uploaded file and create initial state."""
         logger.debug(f"Saving upload for picture_id: {picture_id}")
@@ -101,7 +101,7 @@ class DataManager:
             )
             self._save_state(error_result)
             return error_result
-    
+
     def get_result(self, picture_id: str) -> Optional[TsrResultDto]:
         """Get the processing result for a specific picture."""
         try:
@@ -123,7 +123,7 @@ class DataManager:
         except Exception as e:
             logger.error(f"Error getting result for picture_id {picture_id}: {str(e)}")
             return None
-    
+
     def update_state(self, picture_id: str, new_state: ProcessingState, results: Optional[Dict[str, Any]] = None) -> Optional[ImageProcessingResult]:
         """Update the processing state for a specific picture."""
         try:
@@ -153,7 +153,7 @@ class DataManager:
         except Exception as e:
             logger.error(f"Error updating state for picture_id {picture_id}: {str(e)}")
             return None
-    
+
     def save_xml_result(self, picture_id: str, xml_content: str) -> bool:
         """Save XML result of TSR processing."""
         try:
@@ -169,7 +169,7 @@ class DataManager:
         except Exception as e:
             logger.error(f"Error saving XML for picture_id {picture_id}: {str(e)}")
             return False
-    
+
     def _get_xml_content(self, picture_id: str) -> Optional[str]:
         """Get the XML result for a specific picture."""
         try:
@@ -177,7 +177,7 @@ class DataManager:
             xml_path = os.path.join(picture_dir, f"{picture_id}.xml")
             
             if not os.path.exists(xml_path):
-                logger.warning(f"XML file not found for picture_id: {picture_id}")
+                logger.debug(f"XML file not found for picture_id: {picture_id}")
                 return None
             
             with open(xml_path, "r", encoding="utf-8") as f:
