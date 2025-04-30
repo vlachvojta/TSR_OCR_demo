@@ -13,24 +13,25 @@
         <div class="result-container">
             <div id="loading" class="loading">
                 <div class="spinner"></div>
-                <p>Loading results...</p>
+                <p id="loading-text">Processing your image...</p>
             </div>
+
+            <div id="status-message" class="status"></div>
+            <div id="error-message" class="error hidden"></div>
             
             <div id="results" class="hidden">
                 <div class="result-item">
-                    <h3>Results render</h3>
                     <div class="image-container">
                         <img id="original-image" src="" alt="Original image">
                     </div>
                 </div>
                 
+                <!-- TODO Tohle smazat spolu s results-details v results.json -->
                 <div class="result-details">
                     <h3>Processing Details</h3>
                     <div id="result-data"></div>
                 </div>
             </div>
-            
-            <div id="error-message" class="error hidden"></div>
             
             <div class="actions">
                 <a href="/" class="button">Process Another Image</a>
