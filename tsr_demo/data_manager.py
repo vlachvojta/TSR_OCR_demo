@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 import shutil
 from fastapi import UploadFile
 import logging
+from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -25,15 +26,21 @@ class ImageProcessingResult(BaseModel):
     """Pydantic model for the image processing result."""
     picture_id: str
     status: ProcessingState = Field(default=ProcessingState.INPUT_CREATED)
-    original_filename: Optional[str] = None
-    input_image: Optional[str] = None
+    original_filename: str
+    input_image: str
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    finished_at: Optional[str] = None
     error_message: Optional[str] = None
+    xml_content: Optional[str] = None
     results: Optional[Dict[str, Any]] = None
+
+class TsrResultDto(ImageProcessingResult):
+    xml_content: Optional[str] = Field(None, description="XML content of the processing result")
 
 class DataManager:
     """Class to manage data persistence across multiple FastAPI instances."""
     
-    def __init__(self, base_upload_dir: str = "tsr_demo/uploads"):
+    def __init__(self, base_upload_dir: str = "uploads"):
         """Initialize the data manager with the upload directory."""
         self.base_upload_dir = base_upload_dir
         os.makedirs(base_upload_dir, exist_ok=True)
@@ -52,15 +59,19 @@ class DataManager:
     
     async def save_upload(self, picture_id: str, file: UploadFile) -> ImageProcessingResult:
         """Save an uploaded file and create initial state."""
+        logger.debug(f"Saving upload for picture_id: {picture_id}")
+
         try:
             # Get picture directory
             picture_dir = self._get_picture_dir(picture_id)
+            logger.debug(f"Picture directory: {picture_dir}")
             
             # Extract file extension
             _, ext = os.path.splitext(file.filename)
             
             # Define file path for the uploaded image
             input_image = os.path.join(picture_dir, f"{picture_id}{ext}")
+            logger.debug(f"Input image path: {input_image}")
             
             # Save the file
             with open(input_image, "wb") as f:
@@ -71,7 +82,7 @@ class DataManager:
                 picture_id=picture_id,
                 status=ProcessingState.INPUT_CREATED,
                 original_filename=file.filename,
-                input_image=os.path.join(picture_id, f"{picture_id}{ext}")  # Relative path for API response
+                input_image=input_image  # Relative path for API response
             )
             
             # Save the state
@@ -91,7 +102,7 @@ class DataManager:
             self._save_state(error_result)
             return error_result
     
-    def get_result(self, picture_id: str) -> Optional[ImageProcessingResult]:
+    def get_result(self, picture_id: str) -> Optional[TsrResultDto]:
         """Get the processing result for a specific picture."""
         try:
             state_file = self._get_state(picture_id)
@@ -102,9 +113,11 @@ class DataManager:
             
             with open(state_file, "r") as f:
                 state_data = json.load(f)
-            
+
             # Convert to Pydantic model
-            result = ImageProcessingResult(**state_data)
+            result = TsrResultDto(**state_data)
+            result.xml_content = self._get_xml_content(picture_id)
+
             return result
             
         except Exception as e:
@@ -124,6 +137,12 @@ class DataManager:
             current.status = new_state
             if results is not None:
                 current.results = results
+
+            # If the state is finished, set finished_at
+            if new_state in [ProcessingState.PROCESSED]:
+                current.finished_at = datetime.now().isoformat()
+                self._save_state(current)
+                logger.info(f"Finished processing for picture_id {picture_id} at {current.finished_at}")
             
             # Save updated state
             self._save_state(current)
@@ -151,7 +170,7 @@ class DataManager:
             logger.error(f"Error saving XML for picture_id {picture_id}: {str(e)}")
             return False
     
-    def get_xml_result(self, picture_id: str) -> Optional[str]:
+    def _get_xml_content(self, picture_id: str) -> Optional[str]:
         """Get the XML result for a specific picture."""
         try:
             picture_dir = self._get_picture_dir(picture_id)

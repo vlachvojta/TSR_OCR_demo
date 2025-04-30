@@ -1,0 +1,11 @@
+{
+  "picture_id": "example_page",
+  "status": "processed",
+  "original_filename": "example_page.png",
+  "input_image": "uploads/example_page/example_page.png",
+  "created_at": "2025-04-30T20:43:30.429825",
+  "finished_at": "2025-04-30T20:43:36.434454",
+  "error_message": null,
+  "xml_content": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n            <TSRResult>\n                <ProcessedImage>57617983-2cde-4828-91a2-79ac151d9ad5</ProcessedImage>\n                <TableCount>2</TableCount>\n                <Tables>\n                    <Table id=\"1\">\n                        <Rows>5</Rows>\n                        <Columns>3</Columns>\n                    </Table>\n                    <Table id=\"2\">\n                        <Rows>7</Rows>\n                        <Columns>2</Columns>\n                    </Table>\n                </Tables>\n            </TSRResult>\n            ",
+  "results": null
+}

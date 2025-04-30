@@ -2,7 +2,7 @@ xvlach22.zip
 
 # Ignore all folders with uuids in the name
 uploads/*-*  
-!uploads/example_page
+!uploads/example_*
 .venv_*
 .vscode
 libs/*/

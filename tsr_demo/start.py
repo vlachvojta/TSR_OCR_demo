@@ -3,11 +3,18 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uuid
+import logging
 import os
 from typing import Dict, Any
+import asyncio
 
-from tsr_demo.data_manager import ProcessingState
+from tsr_demo.data_manager import ProcessingState, DataManager
+from tsr_demo.mock_tsr_engine import MockTSREngine
 # from libs.document_structure_analysis.table_transformer_baseline.baseline_table_enging import TableEngine
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="TSR demo",
@@ -26,31 +33,29 @@ image_results['example_page'] = {
     "picture_id": 'example_page',
     "image_ext": '.png',
     "picture_dir": 'uploads/example_page',
-    # "rendered_image": 'uploads/example_page/example_page_render.png',
 }
 
-image_results['example_loading'] = {
-    "status": ProcessingState.DETECTING_TABLES.value,
-    "original_filename": "example_page.png",
-    "input_image": "uploads/example_page/example_page.png",
-    "picture_id": 'example_page',
-    "image_ext": '.png',
-    # "rendered_image": 'uploads/example_loading/example_loading_render.png',
-}
+# image_results['example_loading'] = {
+#     "status": ProcessingState.DETECTING_TABLES.value,
+#     "original_filename": "example_page.png",
+#     "input_image": "uploads/example_page/example_page.png",
+#     "picture_id": 'example_page',
+#     "image_ext": '.png',
+# }
 
-image_results['example_error'] = {
-    "status": ProcessingState.ERROR.value,
-    "original_filename": "example_page.png",
-    "input_image": "uploads/example_page/example_page.png",
-    "picture_id": 'example_page',
-    "image_ext": '.png',
-    # "rendered_image": 'uploads/example_error/example_error_render.png',
-    "error_message": "An error occurred during processing.",
-}
+# image_results['example_error'] = {
+#     "status": ProcessingState.ERROR.value,
+#     "original_filename": "example_page.png",
+#     "input_image": "uploads/example_page/example_page.png",
+#     "picture_id": 'example_page',
+#     "image_ext": '.png',
+#     "error_message": "An error occurred during processing.",
+# }
 
 # Ensure upload directory exists
 UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+data_manager = DataManager(UPLOAD_DIR)
+
 
 # Set up templates and static files
 templates = Jinja2Templates(directory="tsr_demo/templates")
@@ -59,6 +64,7 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Initialize the TSR engine
 # tsr_engine = TableEngine('uploads', 'libs/run_pero_ocr.sh')
+tsr_engine = MockTSREngine()
 
 # API endpoints
 @app.post("/api/upload", summary="Upload an image for TSR processing")
@@ -70,31 +76,13 @@ async def upload_image(file: UploadFile = File(...)):
     """
     # Generate a unique ID for the image
     picture_id = str(uuid.uuid4())
-    picture_dir = os.path.join(UPLOAD_DIR, picture_id)
-    os.makedirs(picture_dir, exist_ok=True)
-
-    # get image extension
-    _, image_ext = os.path.splitext(file.filename)
-
-    # Save the uploaded file
-    file_path = os.path.join(picture_dir, f"{picture_id}{image_ext}")
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
-
-    # For now, just store dummy results
-    image_results[picture_id] = {
-        "status": ProcessingState.INPUT_CREATED.value,
-        "original_filename": file.filename,
-        "input_image": os.path.join(picture_id, f"{picture_id}{image_ext}"),  # Relative path for API response
-        "picture_id": picture_id,
-        "image_ext": image_ext,
-        "picture_dir": picture_dir,
-        # "rendered_image": os.path.join(picture_dir, f"{picture_id}_render.png"),
-    }
-
-    # TODO: run table structure recognition
-    # tsr_engine.process_dir_async(picture_dir)
-
+    
+    # Save the uploaded file and create initial state
+    await data_manager.save_upload(picture_id, file)
+    
+    # Start processing asynchronously
+    asyncio.create_task(tsr_engine.process_image_async(picture_id, data_manager))
+    
     return {"picture_id": picture_id}
 
 @app.get("/api/results/{picture_id}", summary="Get image TSR results")
@@ -104,24 +92,20 @@ async def get_results(picture_id: str):
     
     Use the picture_id returned from the upload endpoint.
     """
-    image_result = image_results.get(picture_id)
-    if not image_result:
+    result = data_manager.get_result(picture_id)
+    
+    if not result:
         raise HTTPException(status_code=404, detail="Image not found")
 
-    # Check if the processing is complete
-    if image_result["status"] != ProcessingState.PROCESSED.value:
-        return image_result
-
-    # send XML file in UPLOAD_DIR/picture_id/picture_id.xml
-    xml_file_path = os.path.join(UPLOAD_DIR, picture_id, f"{picture_id}.xml")
-    if os.path.exists(xml_file_path):
-        with open(xml_file_path, "r") as f:
-            xml_content = f.read()
-        image_results[picture_id]["xml_content"] = xml_content[:200] + "..."
-    else:
-        image_results[picture_id]["status"] = "processing"
-
-    return image_results[picture_id]
+    # # If needed, attach the XML result to the response
+    # if result.status == ProcessingState.PROCESSED:
+    #     xml_content = data_manager.get_xml_result(picture_id)
+    #     if xml_content:
+    #         result_dict = result.dict()
+    #         result_dict["xml_content"] = xml_content
+    #         return result_dict
+    
+    return result
 
 # Frontend routes
 @app.get("/", response_class=HTMLResponse)
