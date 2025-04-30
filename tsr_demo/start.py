@@ -134,11 +134,6 @@ async def read_result(request: Request, picture_id: str):
     """Serve the result page"""
     return templates.TemplateResponse("result.html", {"request": request, "picture_id": picture_id})
 
-# Favicon
-@app.get('/favicon.ico', include_in_schema=False)
-async def favicon():
-    return FileResponse('static/favicon.ico')
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
