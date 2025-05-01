@@ -24,33 +24,18 @@ app = FastAPI(
 
 # In-memory storage for demo purposes
 # In a real application, you'd use a database
-image_results: Dict[str, Any] = {}
-image_results['example_page'] = {
-    "status": ProcessingState.PROCESSED.value,
-    "original_filename": "example_page.png",
-    "input_image": "uploads/example_page/example_page.png",
-    # "xml_content": None,
-    "picture_id": 'example_page',
-    "image_ext": '.png',
-    "picture_dir": 'uploads/example_page',
-}
-
-# image_results['example_loading'] = {
-#     "status": ProcessingState.DETECTING_TABLES.value,
+# image_results: Dict[str, Any] = {}
+# image_results['example_page'] = {
+#     "status": ProcessingState.PROCESSED.value,
 #     "original_filename": "example_page.png",
 #     "input_image": "uploads/example_page/example_page.png",
+#     # "xml_content": None,
 #     "picture_id": 'example_page',
 #     "image_ext": '.png',
+#     "picture_dir": 'uploads/example_page',
 # }
 
-# image_results['example_error'] = {
-#     "status": ProcessingState.ERROR.value,
-#     "original_filename": "example_page.png",
-#     "input_image": "uploads/example_page/example_page.png",
-#     "picture_id": 'example_page',
-#     "image_ext": '.png',
-#     "error_message": "An error occurred during processing.",
-# }
+
 
 # Ensure upload directory exists
 UPLOAD_DIR = "uploads"

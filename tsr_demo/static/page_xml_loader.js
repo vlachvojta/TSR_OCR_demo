@@ -34,6 +34,7 @@ function getTableRegions(xml_content, img) {
         const regionAttributes = {
             id: table.getAttribute('id'),
             coords: loadCoords(coords, img),
+            table_content: new XMLSerializer().serializeToString(table),
         };
         tableRegions.push(regionAttributes);
     }

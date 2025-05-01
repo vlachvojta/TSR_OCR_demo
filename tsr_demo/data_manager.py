@@ -28,6 +28,7 @@ class ImageProcessingResult(BaseModel):
     status: ProcessingState = Field(default=ProcessingState.INPUT_CREATED)
     original_filename: str
     input_image: str
+    xml_filename: Optional[str]
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     finished_at: Optional[str] = None
     error_message: Optional[str] = None
@@ -71,6 +72,7 @@ class DataManager:
             
             # Define file path for the uploaded image
             input_image = os.path.join(picture_dir, f"{picture_id}{ext}")
+            xml_filename = os.path.join(picture_dir, f"{picture_id}.xml")
             logger.debug(f"Input image path: {input_image}")
             
             # Save the file
@@ -82,7 +84,8 @@ class DataManager:
                 picture_id=picture_id,
                 status=ProcessingState.INPUT_CREATED,
                 original_filename=file.filename,
-                input_image=input_image  # Relative path for API response
+                input_image=input_image,  # Relative path for API response
+                xml_filename=xml_filename, # Relative path for API response
             )
             
             # Save the state

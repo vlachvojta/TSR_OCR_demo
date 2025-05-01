@@ -2,6 +2,9 @@
 Dokumentace k projektu WAP - Webové aplikace
 autor: Vojtěch Vlach (xvlach22)
 
+**Aplikace je nasazená na [pcsevcik.fit.vutbr.cz](http://pcsevcik.fit.vutbr.cz:8000/)
+pro možnost spuštění bez instalace a stahování deep-leraning modelů.**
+
 ## Popis aplikace
 Webová aplikace TSR demo (Table structure recognition) představuje jednoduché webové rozhraní k systému rozpoznání textu a struktury tabulek za pomocí deep-learning modelů (téma mojí diplomové práce). Hlavní přínos tohoto projektu je tedy umožnění využití systému bez lokální instalace a bez znalostí vnitřní funkcionality. Do budoucna je v plánu toto rozhraní využít pro  testování odkudkoliv a možnost zpětné vazby od potenciálních uživatelů.
 

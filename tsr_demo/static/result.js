@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const originalImage = document.getElementById('original-image');
     const mapContainer = document.getElementById('map');
     const textlineTranscriptions = document.getElementById('textline-transcriptions');
+    const downloadXmlLink = document.getElementById('download-xml-link');
+    const tableRestuls = document.getElementById('table-results');
     
     // Extract the picture ID from the URL
     const path = window.location.pathname;
@@ -81,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             xml_content: xml_content.length > 500 ? xml_content.substring(0, 500) + '...' : data.xml_content
         };
         resultData.textContent = JSON.stringify(dataToDisplay, null, 1);
+        downloadXmlLink.href = '../' + data.xml_filename;
 
         /// check status, if error, show error message. If not processed, show current status and loading spinner
         if (data.status === 'error') {
@@ -102,6 +105,14 @@ document.addEventListener('DOMContentLoaded', () => {
             loading.classList.add('hidden');
             textlineTranscriptions.classList.remove('hidden');
             mapContainer.classList.remove('hidden');
+            downloadXmlLink.classList.remove('hidden');
+            tableRestuls.classList.remove('hidden');
+            // const textlineTranscriptionsContainer = document.getElementById('textline-transcriptions');
+            // const tableResultsContainer = document.getElementById('table-results');
+            // textlineTranscriptionsContainer.classList.remove('hidden');
+            // tableResultsContainer.classList.remove('hidden');
+            // textline-transcriptions-container
+            // table-results-container
             leafletInit(data);
 
             // count tables is synchronous
@@ -200,18 +211,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // let polygons = {};
         
         // Define polygon coordinates (adjust as needed for your image)
-        const debug_polygon = [
-            [50, 100],
-            [100, 150],
-            [150, 100],
-            [100, 50]
-        ];
+        // const debug_polygon = [
+        //     [50, 100],
+        //     [100, 150],
+        //     [150, 100],
+        //     [100, 50]
+        // ];
         
         // Create polygon
-        const polygon = L.polygon(debug_polygon, {
-            color: 'green',
-            fillOpacity: 0.5
-        }).addTo(map);
+        // const polygon = L.polygon(debug_polygon, {
+        //     color: 'green',
+        //     fillOpacity: 0.5
+        // }).addTo(map);
 
         getTableRegions(data.xml_content, img)
             .forEach((table) => addTable(table, 'red', map));
@@ -220,15 +231,15 @@ document.addEventListener('DOMContentLoaded', () => {
             .forEach((textLine) => addTextline(textLine));
         
         // Store the polygon with an ID for later reference
-        window.polygons.debug_polygon = polygon;
+        // window.polygons.debug_polygon = polygon;
         
-        // Bind click event to polygon
-        polygon.on('click', function() {
-            scrollToSection('section1');
-        });
+        // // Bind click event to polygon
+        // polygon.on('click', function() {
+        //     scrollToSection('section1');
+        // });
         
-        // Add popup to show what will happen on click
-        polygon.bindTooltip("Click to view details");
+        // // Add popup to show what will happen on click
+        // polygon.bindTooltip("Click to view details");
     }
     // Clean up interval when leaving the page
     window.addEventListener('beforeunload', () => {
@@ -240,12 +251,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function addTable(xml_table) {
     // Create polygon for each table region
-    add_polygon(xml_table, 'blue');
+    add_polygon(xml_table, 'blue', scrollToTable);
+
+    // add <p> with xml_table.table_content to table-results div under what is already there
+    // tableResults.classList.remove('hidden');
+    const tableResults = document.getElementById('table-results');
+    const p = document.createElement('p');
+    p.textContent = xml_table.table_content;
+    p.id = xml_table.id;
+    p.classList.add('table-result');
+    // add line break
+    const br = document.createElement('br');
+    p.appendChild(br);
+    // add button to focus on polygon
+    p.addEventListener('click', function() {
+        focusOnPolygon(xml_table.id);
+    });
+    tableResults.appendChild(p);
 }
 
 function addTextline(xml_textline) {
     // Create polygon for each text line
-    add_polygon(xml_textline, 'yellow', window.map);
+    add_polygon(xml_textline, 'yellow', scrollToTranscription);
 
     // add <p> with xml_textline.transcription to textline-transcriptions div under what is already there
     // check if textline-transcriptions div exists
@@ -271,7 +298,7 @@ function addTextline(xml_textline) {
     textlineTranscriptions.appendChild(p);
 }
 
-function add_polygon(xml_polygon, color) {
+function add_polygon(xml_polygon, color, scrollTo) {
     // Create polygon for each text line
     const leaflet_polygon = L.polygon(xml_polygon.coords, {
         color: color,
@@ -283,15 +310,24 @@ function add_polygon(xml_polygon, color) {
 
     // add on click focus section with id xml_polygon.id
     leaflet_polygon.on('click', function() {
-        scrollToSection(xml_polygon.id);
+        scrollTo(xml_polygon.id);
     });
 }
 
-// Function to scroll to section and highlight it
-function scrollToSection(sectionId) {
+function scrollToTranscription(sectionId) {
     const container = document.getElementById('textline-transcriptions');
+    scrollToSection(sectionId, container);
+}
+
+function scrollToTable(sectionId) {
+    const container = document.getElementById('table-results');
+    scrollToSection(sectionId, container);
+}
+
+// Function to scroll to section and highlight it
+function scrollToSection(sectionId, container) {
+    // const container = document.getElementById('textline-transcriptions');
     const transcriptionElement = document.getElementById(sectionId);
-    const targetElement = document.getElementById('r001_l001');
     
     if (!transcriptionElement) {
         console.error(`Section with ID ${sectionId} not found.`);
