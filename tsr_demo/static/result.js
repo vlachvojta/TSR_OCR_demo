@@ -8,44 +8,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultData = document.getElementById('result-data');
     const originalImage = document.getElementById('original-image');
     const mapContainer = document.getElementById('map');
+    const textlineTranscriptions = document.getElementById('textline-transcriptions');
     
     // Extract the picture ID from the URL
     const path = window.location.pathname;
     const pictureId = path.split('/').pop();
     
-    // Fetch the results
+    // Single polling interval reference - defined at the top level
+    let pollingInterval = null;
+    
+    // Start the initial fetch - only called once
     fetchResults(pictureId);
     
-    let pollingInterval;
-
-    // Check if Leaflet is available
-    if (typeof L === 'undefined') {
-        console.error('Leaflet library is not loaded. Please include Leaflet before initializing the map.');
-        return;
-    } else {
-        console.log('Leaflet library is loaded.');
-    }
-
-    console.log('typeof L:', typeof L);
-    console.log('L:', L);
-
     async function fetchResults(id) {
-        const response = await fetch(`/api/results/${id}`);
-        
-        if (!response.ok) {
-            throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        // Display the results
-        displayResults(data);
-        // If the status is not 'processed' or 'error', poll again after a delay
-        if (data.status !== 'processed' && data.status !== 'error') {
-            if (!pollingInterval) {
-                pollingInterval = setInterval(() => fetchResults(id), 250); // Poll every 250ms
+        try {
+            console.log('Fetching results for ID:', id);
+            const response = await fetch(`/api/results/${id}`);
+            
+            if (!response.ok) {
+                throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
             }
-        } else {
-            // Stop polling when processing is complete
+            
+            const data = await response.json();
+            console.log('Fetched data status:', data.status);
+            
+            // Display the results
+            displayResults(data);
+
+            // Handle polling based on status
+            if (data.status === 'processed' || data.status === 'error') {
+                console.log('Processing complete or error occurred. Stopping polling.');
+                // Stop polling when processing is complete
+                if (pollingInterval) {
+                    console.log('Clearing polling interval.');
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                }
+            } else {
+                // Only set up polling if it's not already in progress
+                if (!pollingInterval) {
+                    console.log('Setting up polling interval.');
+                    pollingInterval = setInterval(() => {
+                        fetchResults(id);
+                    }, 250);
+                }
+            }
+        } catch (error) {
+            if (error.message !== 'Map container is already initialized.') {
+                console.error('Error fetching results:', error);
+                showError(`Error: ${error.message}`);
+            }
+            
+            // Clear interval on error as well
             if (pollingInterval) {
                 clearInterval(pollingInterval);
                 pollingInterval = null;
@@ -58,12 +72,13 @@ document.addEventListener('DOMContentLoaded', () => {
             originalImage.src = `/${data.input_image}`;
         }
         resultsContainer.classList.remove('hidden');
-        // Format and display the JSON data
 
+        // Format and display the JSON data
+        const xml_content = data.xml_content ? data.xml_content : 'No XML content available';
         // copy data to new object, shorten xml_content to max 500 characters
         const dataToDisplay = {
             ...data,
-            xml_content: data.xml_content.length > 500 ? data.xml_content.substring(0, 500) + '...' : data.xml_content
+            xml_content: xml_content.length > 500 ? xml_content.substring(0, 500) + '...' : data.xml_content
         };
         resultData.textContent = JSON.stringify(dataToDisplay, null, 1);
 
@@ -82,9 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 loading_text.textContent = `${data.status}`;
             }
             return;
-        } else  if (data.status === 'processed') {
+        } else if (data.status === 'processed') {
             // Hide loading
             loading.classList.add('hidden');
+            textlineTranscriptions.classList.remove('hidden');
+            mapContainer.classList.remove('hidden');
             leafletInit(data);
 
             // count tables is synchronous
@@ -124,6 +141,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function leafletInit(data) {
         console.log('Initializing Leaflet map with data:', data);
+
+        // // Check if Leaflet is already initialized
+        // if (window.map) {
+        //     console.log('Leaflet map already initialized. Skipping initialization.');
+        //     return;
+        // } //else {
+        // }
+        // console.log('Leaflet map not initialized. Proceeding with initialization.');
         // Initialize the map
         window.map = L.map(mapContainer, {
             crs: L.CRS.Simple,

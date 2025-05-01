@@ -58,17 +58,10 @@ function getNonTableTextLines(xml_content, img) {
         for (let j = 0; j < textlines.length; j++) {
             const coords = textlines[j].getElementsByTagName('Coords')[0].getAttribute('points');
 
-            // get transcription but only from TextEquiv that is directly under TextLine
-            // and not from the TextEquiv that is under Word
-            const transcription = getTextLineTranscription(textlines[j]);
-            // textlines[j].getElementsByTagName('TextEquiv').at(-1).getElementsByTagName('Unicode')[0].textContent;
-            console.log(transcription);
-            // get transcription from the TextEquiv that is directly under TextLine
-
             const lineAttributes = {
                 id: textlines[j].getAttribute('id'),
                 coords: loadCoords(coords, img),
-                transcription: transcription
+                transcription: getTextLineTranscription(textlines[j])
             };
             nonTableTextLines.push(lineAttributes);
         }
