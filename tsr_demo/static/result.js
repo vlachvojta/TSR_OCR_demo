@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMessage = document.getElementById('error-message');
     const resultData = document.getElementById('result-data');
     const originalImage = document.getElementById('original-image');
+    const mapContainer = document.getElementById('map');
     
     // Extract the picture ID from the URL
     const path = window.location.pathname;
@@ -14,8 +15,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Fetch the results
     fetchResults(pictureId);
-
+    
     let pollingInterval;
+
+    // Check if Leaflet is available
+    if (typeof L === 'undefined') {
+        console.error('Leaflet library is not loaded. Please include Leaflet before initializing the map.');
+        return;
+    } else {
+        console.log('Leaflet library is loaded.');
+    }
+
+    console.log('typeof L:', typeof L);
+    console.log('L:', L);
 
     async function fetchResults(id) {
         const response = await fetch(`/api/results/${id}`);
@@ -47,7 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         resultsContainer.classList.remove('hidden');
         // Format and display the JSON data
-        resultData.textContent = JSON.stringify(data, null, 2);
+
+        // copy data to new object, shorten xml_content to max 500 characters
+        const dataToDisplay = {
+            ...data,
+            xml_content: data.xml_content.length > 500 ? data.xml_content.substring(0, 500) + '...' : data.xml_content
+        };
+        resultData.textContent = JSON.stringify(dataToDisplay, null, 1);
 
         /// check status, if error, show error message. If not processed, show current status and loading spinner
         if (data.status === 'error') {
@@ -64,10 +82,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 loading_text.textContent = `${data.status}`;
             }
             return;
-        }
+        } else  if (data.status === 'processed') {
+            // Hide loading
+            loading.classList.add('hidden');
+            leafletInit(data);
 
-        // Hide loading
-        loading.classList.add('hidden');
+            // count tables is synchronous
+            const table_count = countTables(data.xml_content);
+            console.log('Table count in XML:', table_count);    
+
+            return;
+        }
     }
 
     function showError(message) {
@@ -95,6 +120,125 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         return null;
+    }
+
+    function leafletInit(data) {
+        console.log('Initializing Leaflet map with data:', data);
+        // Initialize the map
+        const map = L.map(mapContainer, {
+            crs: L.CRS.Simple,
+            minZoom: -3
+        });
+        
+        // load data.input_image to get width and height
+        const img = new Image();
+        img.src = `/${data.input_image}`;
+        
+        img.onload = leafletOnLoadImage.bind(null, data, map, img);
+        img.onerror = function() {
+            const error_message = 'Error loading image. Please check the image path: ' + data.input_image;
+            console.error(error_message);
+            showError(error_message);
+
+            // display placeholder to originalImage
+            originalImage.src = '/static/placeholder.png';
+            originalImage.alt = 'Placeholder image';
+
+            // change originalImage to a link to homepage (so the user can see the placeholder and cursor changes to hand on hover, same as <a> and <button> automatically)
+            originalImage.style.cursor = 'pointer';
+            originalImage.addEventListener('click', function() {
+                window.location.href = '/';
+            });
+
+            mapContainer.classList.add('hidden');
+        };
+    }
+
+    function leafletOnLoadImage(data, map, img) {
+        originalImage.classList.add('hidden');
+        const imageWidth = img.width;
+        const imageHeight = img.height;
+
+        // Define bounds for the image
+        const bounds = [[0, 0], [imageHeight, imageWidth]];
+
+        // Add the image overlay (using placeholder since actual image path is not available)
+        // In a real scenario, replace '/api/placeholder/800/600' with 'public/page.png'
+        const image = L.imageOverlay('../' + data.input_image, bounds).addTo(map);
+
+        // Set the view to fit the image bounds
+        map.fitBounds(bounds);
+        
+        // Store polygons in an object for easy access
+        const polygons = {};
+        
+        // Define polygon coordinates (adjust as needed for your image)
+        const polygonCoords = [
+            [100, 200],
+            [200, 300],
+            [300, 200],
+            [200, 100]
+        ];
+        
+        // Create polygon
+        const polygon = L.polygon(polygonCoords, {
+            color: 'green',
+            fillColor: '#3f6',
+            fillOpacity: 0.4
+        }).addTo(map);
+        
+        // Store the polygon with an ID for later reference
+        polygons.polygon1 = polygon;
+        
+        // Function to scroll to section and highlight it
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.scrollIntoView({ behavior: 'smooth' });
+            
+            // Add highlight effect
+            section.classList.add('highlight');
+            
+            // Remove highlight after 2 seconds
+            setTimeout(() => {
+                section.classList.remove('highlight');
+            }, 2000);
+        }
+        
+        // Function to focus on a polygon
+        function focusOnPolygon(polygonId) {
+            const polygon = polygons[polygonId];
+            
+            // Ensure the polygon exists
+            if (polygon) {
+                // Center map on polygon
+                map.fitBounds(polygon.getBounds());
+                
+                // Highlight the polygon
+                const originalStyle = {
+                    fillOpacity: polygon.options.fillOpacity,
+                    fillColor: polygon.options.fillColor
+                };
+                
+                // Increase opacity for highlight effect
+                polygon.setStyle({
+                    fillOpacity: 0.8,
+                    fillColor: '#5dff7f'
+                });
+                
+                // Reset style after animation
+                setTimeout(() => {
+                    polygon.setStyle(originalStyle);
+                }, 1500);
+            }
+        }
+        
+        // Bind click event to polygon
+        polygon.on('click', function() {
+            scrollToSection('section1');
+        });
+        
+        // Add popup to show what will happen on click
+        polygon.bindTooltip("Click to view details");
     }
 
     // Clean up interval when leaving the page
