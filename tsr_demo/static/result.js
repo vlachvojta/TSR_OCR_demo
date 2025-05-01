@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function leafletInit(data) {
         console.log('Initializing Leaflet map with data:', data);
         // Initialize the map
-        const map = L.map(mapContainer, {
+        window.map = L.map(mapContainer, {
             crs: L.CRS.Simple,
             minZoom: -3
         });
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = new Image();
         img.src = `/${data.input_image}`;
         
-        img.onload = leafletOnLoadImage.bind(null, data, map, img);
+        img.onload = leafletOnLoadImage.bind(null, data, window.map, img);
         img.onerror = function() {
             const error_message = 'Error loading image. Please check the image path: ' + data.input_image;
             console.error(error_message);
@@ -170,67 +170,32 @@ document.addEventListener('DOMContentLoaded', () => {
         map.fitBounds(bounds);
         
         // Store polygons in an object for easy access
-        const polygons = {};
+        // define polygons to be accessible in the whole scope
+        window.polygons = {};
+        // let polygons = {};
         
         // Define polygon coordinates (adjust as needed for your image)
-        const polygonCoords = [
-            [100, 200],
-            [200, 300],
-            [300, 200],
-            [200, 100]
+        const debug_polygon = [
+            [50, 100],
+            [100, 150],
+            [150, 100],
+            [100, 50]
         ];
         
         // Create polygon
-        const polygon = L.polygon(polygonCoords, {
+        const polygon = L.polygon(debug_polygon, {
             color: 'green',
-            fillColor: '#3f6',
-            fillOpacity: 0.4
+            fillOpacity: 0.5
         }).addTo(map);
+
+        getTableRegions(data.xml_content, img)
+            .forEach((table) => addTable(table, 'red', map));
+
+        getNonTableTextLines(data.xml_content, img)
+            .forEach((textLine) => addTextline(textLine));
         
         // Store the polygon with an ID for later reference
-        polygons.polygon1 = polygon;
-        
-        // Function to scroll to section and highlight it
-        function scrollToSection(sectionId) {
-            const section = document.getElementById(sectionId);
-            section.scrollIntoView({ behavior: 'smooth' });
-            
-            // Add highlight effect
-            section.classList.add('highlight');
-            
-            // Remove highlight after 2 seconds
-            setTimeout(() => {
-                section.classList.remove('highlight');
-            }, 2000);
-        }
-        
-        // Function to focus on a polygon
-        function focusOnPolygon(polygonId) {
-            const polygon = polygons[polygonId];
-            
-            // Ensure the polygon exists
-            if (polygon) {
-                // Center map on polygon
-                map.fitBounds(polygon.getBounds());
-                
-                // Highlight the polygon
-                const originalStyle = {
-                    fillOpacity: polygon.options.fillOpacity,
-                    fillColor: polygon.options.fillColor
-                };
-                
-                // Increase opacity for highlight effect
-                polygon.setStyle({
-                    fillOpacity: 0.8,
-                    fillColor: '#5dff7f'
-                });
-                
-                // Reset style after animation
-                setTimeout(() => {
-                    polygon.setStyle(originalStyle);
-                }, 1500);
-            }
-        }
+        window.polygons.debug_polygon = polygon;
         
         // Bind click event to polygon
         polygon.on('click', function() {
@@ -240,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add popup to show what will happen on click
         polygon.bindTooltip("Click to view details");
     }
-
     // Clean up interval when leaving the page
     window.addEventListener('beforeunload', () => {
         if (pollingInterval) {
@@ -248,3 +212,137 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function addTable(xml_table) {
+    // Create polygon for each table region
+    add_polygon(xml_table, 'blue');
+}
+
+function addTextline(xml_textline) {
+    // Create polygon for each text line
+    add_polygon(xml_textline, 'yellow', window.map);
+
+    // add <p> with xml_textline.transcription to textline-transcriptions div under what is already there
+    // check if textline-transcriptions div exists
+    if (!document.getElementById('textline-transcriptions')) {
+        console.error('textline-transcriptions div not found');
+        return;
+    }
+
+    const textlineTranscriptions = document.getElementById('textline-transcriptions');
+    const p = document.createElement('p');
+    p.textContent = xml_textline.transcription;
+    p.id = xml_textline.id;
+    p.classList.add('textline-transcription');
+    
+    // add line break
+    const br = document.createElement('br');
+    p.appendChild(br);
+    // add button to focus on polygon
+
+    p.addEventListener('click', function() {
+        focusOnPolygon(xml_textline.id);
+    });
+    textlineTranscriptions.appendChild(p);
+}
+
+function add_polygon(xml_polygon, color) {
+    // Create polygon for each text line
+    const leaflet_polygon = L.polygon(xml_polygon.coords, {
+        color: color,
+        fillOpacity: 0.1
+    }).addTo(window.map);
+    
+    // Store the polygon with its ID
+    window.polygons[xml_polygon.id] = leaflet_polygon;
+
+    // add on click focus section with id xml_polygon.id
+    leaflet_polygon.on('click', function() {
+        scrollToSection(xml_polygon.id);
+    });
+}
+
+// Function to scroll to section and highlight it
+function scrollToSection(sectionId) {
+    const container = document.getElementById('textline-transcriptions');
+    const transcriptionElement = document.getElementById(sectionId);
+    const targetElement = document.getElementById('r001_l001');
+    
+    if (!transcriptionElement) {
+        console.error(`Section with ID ${sectionId} not found.`);
+        return;
+    }
+    
+    // scroll to the section so the section is at the bottom of the screen
+    container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+    // Calculate where to scroll to - this gets the position of the target relative to its parent
+    const scrollPosition = transcriptionElement.offsetTop - container.offsetTop;
+
+    // Smooth scroll to that position within the container
+    container.scrollTo({
+        top: scrollPosition,
+        behavior: 'smooth'
+    });
+
+
+    // // section.scrollIntoView({ behavior: 'smooth' });
+    // // Scroll to the section but the section should end up in the bottom of the screen
+    // const sectionRect = section.getBoundingClientRect();
+    // const offsetBottom = sectionRect.bottom - window.innerHeight;
+    // const sectionBottom = sectionRect.bottom + window.scrollY - offsetBottom;
+    // window.scrollTo({ top: sectionBottom, behavior: 'smooth' });
+
+
+    // const offset = sectionRect.height - window.innerHeight;
+    // const sectionTop = sectionRect.top + window.scrollY - offset;
+    // window.scrollTo({ top: sectionTop, behavior: 'smooth' });
+    
+    // Add highlight effect
+    transcriptionElement.classList.add('highlight');
+    
+    // Remove highlight after 3 seconds
+    setTimeout(() => {
+        transcriptionElement.classList.remove('highlight');
+    }, 3000);
+}
+
+// Function to focus on a polygon
+function focusOnPolygon(polygonId) {
+    const polygon = window.polygons[polygonId];
+    console.log('Focusing on polygon:', polygon);
+
+    if (!polygon) {
+        console.error(`Polygon with ID ${polygonId} not found.`);
+        return;
+    }
+    
+    // Ensure the polygon exists
+    if (polygon) {
+        // Scroll to the map section
+        scrollToSection('map');
+
+        // scroll to the top of the page with smooth behavior
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Center map on polygon
+        window.map.fitBounds(polygon.getBounds());
+        
+        // Highlight the polygon
+        const originalStyle = {
+            fillOpacity: polygon.options.fillOpacity,
+            fillColor: polygon.options.fillColor
+        };
+        
+        // Increase opacity for highlight effect
+        polygon.setStyle({
+            fillOpacity: 0.8,
+            // fillColor: '#5dff7f'
+        });
+
+        // Reset style after animation
+        setTimeout(() => {
+            polygon.setStyle(originalStyle);
+        }, 2000);
+    }
+}

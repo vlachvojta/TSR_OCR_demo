@@ -191,10 +191,9 @@ input[type="file"] {
     transition: all 0.3s ease;
 }
 
-
 .map-link {
     display: inline-block;
-    background-color: #4CAF50;
+    background-color: var(--secondary-color);
     color: white;
     padding: 6px 12px;
     text-decoration: none;
@@ -205,4 +204,22 @@ input[type="file"] {
 
 .map-link:hover {
     background-color: #3e8e41;
+}
+
+.highlight {
+    background-color: #e6ffe6;
+    transition: background-color 0.5s ease;
+}
+
+#textline-transcriptions {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* min-height: 200px; */
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 10px;
+    /* background-color: var(--primary-color); */
+    border-radius: 4px;
+    /* margin-top: 10px; */
 }

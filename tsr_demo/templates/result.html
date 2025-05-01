@@ -26,16 +26,27 @@
             
             <div id="map"></div>
 
+            <div id="textline-transcriptions">
+                <p>textline trascriptions section</p>
+            </div>
+
+            <div id="section1" class="section">
+                <h3>Section 1: Green Polygon Area</h3>
+                <p>This section corresponds to the green polygon on the map. When you click on the green polygon, the page will automatically scroll to this section.</p>
+                <p>The polygon represents an important area in the image. You can add more detailed information about this area here.</p>
+                <a class="button" onclick="focusOnPolygon('debug_polygon')">Show on map</a>
+            </div>
+
             <div id="results" class="hidden">
                 <div class="result-item">
                     <div class="image-container">
                         <img id="original-image" src="" alt="Original image">
                     </div>
                 </div>
-                
+
                 <!-- TODO Tohle smazat spolu s results-details v results.json -->
                 <div class="result-details">
-                    <h3>Processing Details</h3>
+                    <h3>Processing details</h3>
                     <div id="result-data"></div>
                 </div>
             </div>
