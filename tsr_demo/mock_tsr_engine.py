@@ -18,21 +18,21 @@ class MockTSREngine:
             logger.info(f"MOCK_TSR: Processing OCR for {picture_id}")
             
             # Simulate OCR processing
-            await asyncio.sleep(2)
+            await asyncio.sleep(5)
             
             # Update state to detecting_tables
             data_manager.update_state(picture_id, ProcessingState.DETECTING_TABLES)
             logger.info(f"MOCK_TSR: Detecting tables for {picture_id}")
             
             # Simulate table detection
-            await asyncio.sleep(3)
+            await asyncio.sleep(4)
             
             # Update state to recognizing_table_structure
             data_manager.update_state(picture_id, ProcessingState.RECOGNIZING_TABLE_STRUCTURE)
             
             logger.info(f"MOCK_TSR: Recognizing table structure for {picture_id}")
             # Simulate table structure recognition
-            await asyncio.sleep(1)
+            await asyncio.sleep(3)
             
             # Save XML result (mock result for demonstration)
             xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>

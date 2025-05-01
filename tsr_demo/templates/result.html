@@ -20,17 +20,21 @@
                 <div class="spinner"></div>
                 <p id="loading-text">Processing your image...</p>
             </div>
-
+            
             <!-- Add button with image /static/xml_icon.png and alt "Download XML" -->
             <a href="#" id="download-xml-link" class="button hidden" download>
                 <img src="/static/xml_icon.png" alt="Download XML" id="download-xml-img">
                 Download XML
             </a>
-
+            
             <div id="status-message" class="status"></div>
             <div id="error-message" class="error hidden"></div>
-            
+
             <div id="map" class="hidden"></div>
+
+            <div class="image-container">
+                <img id="original-image" src="" alt="Original image">
+            </div>
             
             <h3>Table results in XML</h3>
             <div id="table-results" class="hidden"></div>
@@ -40,18 +44,8 @@
                 <!-- <p>textline trascriptions section</p> -->
             </div>
 
-            <!-- <div id="section1" class="section">
-                <h3>Section 1: Green Polygon Area</h3>
-                <p>This section corresponds to the green polygon on the map. When you click on the green polygon, the page will automatically scroll to this section.</p>
-                <p>The polygon represents an important area in the image. You can add more detailed information about this area here.</p>
-                <a class="button" onclick="focusOnPolygon('debug_polygon')">Show on map</a>
-            </div> -->
-
             <div id="results" class="hidden">
                 <div class="result-item">
-                    <div class="image-container">
-                        <img id="original-image" src="" alt="Original image">
-                    </div>
                 </div>
 
                 <!-- TODO Tohle smazat spolu s results-details v results.json -->

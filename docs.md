@@ -25,3 +25,5 @@ První spuštění bude trvat déle, protože se stahuje několik deep-learning 
 Potřebné nástroje před spuštěním:
 - python3.8+
 - pip
+
+Popsat aspoň trochu TablePageXML I guess...

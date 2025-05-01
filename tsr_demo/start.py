@@ -22,25 +22,9 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# In-memory storage for demo purposes
-# In a real application, you'd use a database
-# image_results: Dict[str, Any] = {}
-# image_results['example_page'] = {
-#     "status": ProcessingState.PROCESSED.value,
-#     "original_filename": "example_page.png",
-#     "input_image": "uploads/example_page/example_page.png",
-#     # "xml_content": None,
-#     "picture_id": 'example_page',
-#     "image_ext": '.png',
-#     "picture_dir": 'uploads/example_page',
-# }
-
-
-
 # Ensure upload directory exists
 UPLOAD_DIR = "uploads"
 data_manager = DataManager(UPLOAD_DIR)
-
 
 # Set up templates and static files
 templates = Jinja2Templates(directory="tsr_demo/templates")
@@ -78,17 +62,12 @@ async def get_results(picture_id: str):
     Use the picture_id returned from the upload endpoint.
     """
     result = data_manager.get_result(picture_id)
-    
+
     if not result:
         raise HTTPException(status_code=404, detail="Image not found")
 
-    # # If needed, attach the XML result to the response
-    # if result.status == ProcessingState.PROCESSED:
-    #     xml_content = data_manager.get_xml_result(picture_id)
-    #     if xml_content:
-    #         result_dict = result.dict()
-    #         result_dict["xml_content"] = xml_content
-    #         return result_dict
+    if result.status == ProcessingState.PROCESSED:
+        return data_manager.get_result('example_page')  # return example page for demo purposes
     
     return result
 
