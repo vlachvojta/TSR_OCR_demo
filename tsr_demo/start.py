@@ -10,7 +10,7 @@ import asyncio
 
 from tsr_demo.data_manager import ProcessingState, DataManager
 from tsr_demo.mock_tsr_engine import MockTSREngine
-# from libs.document_structure_analysis.table_transformer_baseline.baseline_table_enging import TableEngine
+# from libs.document_structure_analysis.table_transformer_baseline.baseline_table_engine import TableEngine
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
