@@ -381,7 +381,8 @@ function focusOnPolygon(polygonId) {
     // Ensure the polygon exists
     if (polygon) {
         // Scroll to the map section
-        scrollToSection('map');
+        const mapSection = document.getElementById('map');
+        mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         // scroll to the top of the page with smooth behavior
         window.scrollTo({ top: 0, behavior: 'smooth' });
