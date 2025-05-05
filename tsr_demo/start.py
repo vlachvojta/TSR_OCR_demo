@@ -68,7 +68,7 @@ async def get_results(picture_id: str):
 
     if result.status == ProcessingState.PROCESSED:
         return data_manager.get_result('example_page')  # return example page for demo purposes
-    
+
     return result
 
 # Frontend routes

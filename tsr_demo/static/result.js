@@ -69,18 +69,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function cut_off_string(str, max_length) {
+        if (! str) {
+            return 'No content available';
+        }
+
+        if (str.length > max_length) {
+            return str.substring(0, max_length) + '...';
+        }
+        return str;
+    }
+
     function displayResults(data) {
         if (data.input_image) {
             originalImage.src = `/${data.input_image}`;
         }
         resultsContainer.classList.remove('hidden');
 
+        console.log('html_tables:', data.html_tables);
+        console.log('html_tables type:', typeof data.html_tables);
+
+        const html_tables_shortened = data.html_tables ? Object.keys(data.html_tables)
+            .map((key) => {
+                return {
+                    [key]: cut_off_string(data.html_tables[key], 300)
+                };
+            }) : 'No HTML tables available';
+        console.log('html_tables shortened:', html_tables_shortened);
+
         // Format and display the JSON data
         const xml_content = data.xml_content ? data.xml_content : 'No XML content available';
         // copy data to new object, shorten xml_content to max 500 characters
         const dataToDisplay = {
             ...data,
-            xml_content: xml_content.length > 500 ? xml_content.substring(0, 500) + '...' : data.xml_content
+            xml_content: cut_off_string(xml_content, 500),
+            html_tables: html_tables_shortened,
         };
         resultData.textContent = JSON.stringify(dataToDisplay, null, 1);
         downloadXmlLink.href = '../' + data.xml_filename;
@@ -377,7 +400,7 @@ function focusOnPolygon(polygonId) {
         console.error(`Polygon with ID ${polygonId} not found.`);
         return;
     }
-    
+
     // Ensure the polygon exists
     if (polygon) {
         // Scroll to the map section
@@ -389,16 +412,16 @@ function focusOnPolygon(polygonId) {
 
         // Center map on polygon
         window.map.fitBounds(polygon.getBounds());
-        
+
         // Highlight the polygon
         const originalStyle = {
             fillOpacity: polygon.options.fillOpacity,
             fillColor: polygon.options.fillColor
         };
-        
+
         // Increase opacity for highlight effect
         polygon.setStyle({
-            fillOpacity: 0.8,
+            fillOpacity: 0.7,
             // fillColor: '#5dff7f'
         });
 

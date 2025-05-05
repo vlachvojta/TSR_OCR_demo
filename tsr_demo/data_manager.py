@@ -8,6 +8,9 @@ from fastapi import UploadFile
 import logging
 from datetime import datetime
 
+from organizer.tables.infer.html_inator import table_layout_to_html
+from organizer.tables.table_layout import TablePageLayout, TableRegion
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,6 +40,7 @@ class ImageProcessingResult(BaseModel):
 
 class TsrResultDto(ImageProcessingResult):
     xml_content: Optional[str] = Field(None, description="XML content of the processing result")
+    html_tables: Optional[Dict[str, str]] = Field(None, description="HTML tables extracted from the XML content")
 
 class DataManager:
     """Class to manage data persistence across multiple FastAPI instances."""
@@ -120,6 +124,7 @@ class DataManager:
             # Convert to Pydantic model
             result = TsrResultDto(**state_data)
             result.xml_content = self._get_xml_content(picture_id)
+            result.html_tables = self._get_html_tables(picture_id)
 
             return result
             
@@ -178,18 +183,32 @@ class DataManager:
         try:
             picture_dir = self._get_picture_dir(picture_id)
             xml_path = os.path.join(picture_dir, f"{picture_id}.xml")
-            
+
             if not os.path.exists(xml_path):
                 logger.debug(f"XML file not found for picture_id: {picture_id}")
                 return None
-            
+
             with open(xml_path, "r", encoding="utf-8") as f:
                 return f.read()
-                
+
         except Exception as e:
             logger.error(f"Error reading XML for picture_id {picture_id}: {str(e)}")
             return None
-    
+
+    # def _get_html_tables(self, xml_content: str, picture_id: str) -> Optional[Dict[str, str]]:
+    def _get_html_tables(self, picture_id: str) -> Optional[Dict[str, str]]:
+        # Parse the XML content to extract tables
+        try:
+            picture_dir = self._get_picture_dir(picture_id)
+            xml_path = os.path.join(picture_dir, f"{picture_id}.xml")
+            table_page_layout = TablePageLayout.from_table_pagexml(xml_path)
+            html_tables = table_layout_to_html(table_page_layout)
+            html_tables = {t_id: str(table_tag) for t_id, table_tag in html_tables.items()}
+        except Exception as e:
+            logger.error(f"Error parsing XML for picture_id {picture_id}: {str(e)}")
+            html_tables = None
+        return html_tables
+
     def _save_state(self, result: ImageProcessingResult) -> None:
         """Save the state to the file system."""
         try:
