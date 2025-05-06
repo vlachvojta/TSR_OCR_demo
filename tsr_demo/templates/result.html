@@ -20,41 +20,50 @@
                 <div class="spinner"></div>
                 <p id="loading-text">Processing your image...</p>
             </div>
-            
-            <!-- Add button with image /static/xml_icon.png and alt "Download XML" -->
-            <a href="#" id="download-xml-link" class="button hidden" download>
-                <img src="/static/xml_icon.png" alt="Download XML" id="download-xml-img">
-                Download XML
-            </a>
-            
-            <div id="status-message" class="status"></div>
-            <div id="error-message" class="error hidden"></div>
 
-            <div id="map" class="hidden"></div>
+            <div id="status-message" class="status"></div>
+
+            <div id="error-message" class="error hidden"></div>
 
             <div class="image-container">
                 <img id="original-image" src="" alt="Original image">
             </div>
 
-            <h3>Table results</h3>
-            <div id="table-results" class="hidden"></div>
+            <!-- Add two columns, one with the map, and second with the transriptions.
+            use flexbox to align them side by side -->
+            <!-- Add flex container for the first column -->
+            <div class="flex-container">
+                <div class="flex-item">
+                    <div id="map" class="hidden"></div>
+                    <a href="#" id="download-xml-link" class="button hidden" download>
+                        <img src="/static/xml_icon.png" alt="Download XML" id="download-xml-img">
+                        Download XML
+                    </a>
 
-            <h3>Text transcriptions</h3>
-            <div id="textline-transcriptions" class="hidden">
-                <!-- <p>textline trascriptions section</p> -->
+                </div>
+                <div class="flex-item">
+                    <h3>Table results</h3>
+                    <div id="table-results" class="hidden"></div>
+        
+                    <h3>Text transcriptions</h3>
+                    <div id="textline-transcriptions" class="hidden">
+                        <!-- <p>textline trascriptions section</p> -->
+                    </div>
+        
+                    <div id="results" class="hidden">
+                        <div class="result-item">
+                        </div>
+        
+                    </div>
+                    
+                </div>
             </div>
 
-            <div id="results" class="hidden">
-                <div class="result-item">
-                </div>
-
-                <!-- TODO Tohle smazat spolu s results-details v results.json -->
-                <div class="result-details">
-                    <h3>Processing details</h3>
-                    <div id="result-data"></div>
-                </div>
+            <div class="result-details">
+                <h3>Processing details</h3>
+                <div id="result-data"></div>
             </div>
-            
+
             <div class="actions">
                 <a href="/" class="button">Process Another Image</a>
             </div>
