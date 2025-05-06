@@ -8,8 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 RUN mkdir -p uploads
-RUN chmod +x run_server.sh
+RUN chmod +x start_tsr_demo.sh
 
 EXPOSE 8000
 
-CMD ["./run_server.sh"]
+CMD ["./start_tsr_demo.sh"]
