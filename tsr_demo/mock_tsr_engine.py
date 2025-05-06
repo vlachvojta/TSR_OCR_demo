@@ -32,7 +32,7 @@ class MockTSREngine:
             
             logger.info(f"MOCK_TSR: Recognizing table structure for {picture_id}")
             # Simulate table structure recognition
-            await asyncio.sleep(3)
+            await asyncio.sleep(4)
             
             # Save XML result (mock result for demonstration)
             xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>

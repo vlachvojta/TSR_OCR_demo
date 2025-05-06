@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Setting up polling interval.');
                     pollingInterval = setInterval(() => {
                         fetchResults(id);
-                    }, 250);
+                    }, 500);
                 }
             }
         } catch (error) {
@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // }).addTo(map);
 
         getTableRegions(data.xml_content, img)
-            .forEach((table) => addTable(table, 'red', map));
+            .forEach((table) => addTable(table, data.html_tables[table.id]));
 
         getNonTableTextLines(data.xml_content, img)
             .forEach((textLine) => addTextline(textLine));
@@ -272,25 +272,63 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function addTable(xml_table) {
+function addTable(xml_table, html_table) {
     // Create polygon for each table region
     add_polygon(xml_table, 'blue', scrollToTable);
 
     // add <p> with xml_table.table_content to table-results div under what is already there
     // tableResults.classList.remove('hidden');
     const tableResults = document.getElementById('table-results');
-    const p = document.createElement('p');
-    p.textContent = xml_table.table_content;
-    p.id = xml_table.id;
-    p.classList.add('table-result');
-    // add line break
-    const br = document.createElement('br');
-    p.appendChild(br);
-    // add button to focus on polygon
-    p.addEventListener('click', function() {
-        focusOnPolygon(xml_table.id);
-    });
-    tableResults.appendChild(p);
+
+    if (html_table) {
+        // instead of p, add the html table
+        const div = document.createElement('div');
+
+        div.innerHTML = html_table;
+        div.id = xml_table.id;
+        div.classList.add('table-result');
+        // add line break
+        const br = document.createElement('br');
+        div.appendChild(br);
+        // add button to focus on polygon
+        div.addEventListener('click', function() {
+            focusOnPolygon(xml_table.id);
+        });
+        tableResults.appendChild(div);
+
+        const downloadButton = document.createElement('a');
+        downloadButton.href = `data:text/html;charset=utf-8,${encodeURIComponent(html_table)}`;
+        downloadButton.download = `${xml_table.id}.html`;
+        downloadButton.textContent = 'Download HTML';
+        downloadButton.classList.add('download-button');
+        downloadButton.style.display = 'block';
+        downloadButton.style.color = '#3498db';
+        downloadButton.style.textDecoration = 'underline';
+        downloadButton.style.cursor = 'pointer';
+        downloadButton.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent the click from triggering the polygon focus
+        });
+        div.appendChild(downloadButton);
+        // add line break
+        const br2 = document.createElement('br');
+        div.appendChild(br2);
+
+
+    } else {
+        console.error('HTML table not found defaulting to xml_table.table_content');
+        const p = document.createElement('p');
+        p.textContent = xml_table.table_content;
+        p.id = xml_table.id;
+        p.classList.add('table-result');
+        // add line break
+        const br = document.createElement('br');
+        p.appendChild(br);
+        // add button to focus on polygon
+        p.addEventListener('click', function() {
+            focusOnPolygon(xml_table.id);
+        });
+        tableResults.appendChild(p);
+    }
 }
 
 function addTextline(xml_textline) {
